@@ -30,6 +30,9 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.ui.unit.Dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Backspace
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
@@ -45,6 +48,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,7 +70,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun Calculator() {
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
@@ -228,6 +236,19 @@ fun Calculator() {
             }
         }
 
+        fun onDeleteClick() {
+            if (currentNumber.isNotEmpty()) {
+                currentNumber = currentNumber.dropLast(1)
+                updateDisplay(currentNumber)
+                if (expression.isNotEmpty()) {
+                    expression = expression.dropLast(1)
+                }
+                if (currentNumber.isEmpty()) {
+                    updateDisplay("")
+                }
+            }
+        }
+
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
@@ -300,17 +321,34 @@ fun Calculator() {
                     modifier = Modifier.weight(buttonsWeight),
                     verticalArrangement = Arrangement.spacedBy(buttonPadding)
                 ) {
+                    // Первый ряд: C, Backspace, (, )
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(rowWeight),
                         horizontalArrangement = Arrangement.spacedBy(buttonPadding)
                     ) {
-                        CalculatorM3Button("C", buttonColors.errorContainer, buttonColors.onErrorContainer, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onClearClick() }
-                        CalculatorM3Button("±", buttonColors.secondaryContainer, buttonColors.onSecondaryContainer, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onPlusMinusClick() }
-                        CalculatorM3Button("%", buttonColors.secondaryContainer, buttonColors.onSecondaryContainer, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onPercentClick() }
-                        CalculatorM3Button("÷", buttonColors.primaryContainer, buttonColors.onPrimaryContainer, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onOperatorClick("÷") }
+                        CalculatorM3Button("C", buttonColors.secondaryContainer, buttonColors.onSecondaryContainer, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onClearClick() }
+                        IconButton(
+                            onClick = { onDeleteClick() },
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = buttonColors.secondaryContainer,
+                                contentColor = buttonColors.onSecondaryContainer
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Backspace,
+                                contentDescription = "Удалить символ",
+                                modifier = Modifier.size(if (isLandscape) 24.dp else 32.dp)
+                            )
+                        }
+                        CalculatorM3Button("(", buttonColors.secondaryContainer, buttonColors.onSecondaryContainer, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onNumberClick("(") }
+                        CalculatorM3Button(")", buttonColors.secondaryContainer, buttonColors.onSecondaryContainer, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onNumberClick(")") }
                     }
+                    // Второй ряд: 7, 8, 9, ÷
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -320,8 +358,9 @@ fun Calculator() {
                         CalculatorM3Button("7", buttonColors.surface, buttonColors.onSurface, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onNumberClick("7") }
                         CalculatorM3Button("8", buttonColors.surface, buttonColors.onSurface, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onNumberClick("8") }
                         CalculatorM3Button("9", buttonColors.surface, buttonColors.onSurface, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onNumberClick("9") }
-                        CalculatorM3Button("×", buttonColors.primaryContainer, buttonColors.onPrimaryContainer, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onOperatorClick("×") }
+                        CalculatorM3Button("÷", buttonColors.primaryContainer, buttonColors.onPrimaryContainer, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onOperatorClick("÷") }
                     }
+                    // Третий ряд: 4, 5, 6, ×
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -331,8 +370,9 @@ fun Calculator() {
                         CalculatorM3Button("4", buttonColors.surface, buttonColors.onSurface, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onNumberClick("4") }
                         CalculatorM3Button("5", buttonColors.surface, buttonColors.onSurface, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onNumberClick("5") }
                         CalculatorM3Button("6", buttonColors.surface, buttonColors.onSurface, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onNumberClick("6") }
-                        CalculatorM3Button("-", buttonColors.primaryContainer, buttonColors.onPrimaryContainer, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onOperatorClick("-") }
+                        CalculatorM3Button("×", buttonColors.primaryContainer, buttonColors.onPrimaryContainer, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onOperatorClick("×") }
                     }
+                    // Четвертый ряд: 1, 2, 3, +
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -344,13 +384,15 @@ fun Calculator() {
                         CalculatorM3Button("3", buttonColors.surface, buttonColors.onSurface, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onNumberClick("3") }
                         CalculatorM3Button("+", buttonColors.primaryContainer, buttonColors.onPrimaryContainer, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onOperatorClick("+") }
                     }
+                    // Пятый ряд: ±, 0, ., =
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(rowWeight),
                         horizontalArrangement = Arrangement.spacedBy(buttonPadding)
                     ) {
-                        CalculatorM3Button("0", buttonColors.surface, buttonColors.onSurface, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(2f)) { onNumberClick("0") }
+                        CalculatorM3Button("±", buttonColors.secondaryContainer, buttonColors.onSecondaryContainer, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onPlusMinusClick() }
+                        CalculatorM3Button("0", buttonColors.surface, buttonColors.onSurface, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onNumberClick("0") }
                         CalculatorM3Button(".", buttonColors.surface, buttonColors.onSurface, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onDotClick() }
                         CalculatorM3Button("=", buttonColors.primary, buttonColors.onPrimary, buttonShape, buttonFontSize, opButtonFontSize, Modifier.weight(1f)) { onEqualsClick() }
                     }
@@ -377,20 +419,28 @@ fun Calculator() {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "История вычислений",
-                                style = MaterialTheme.typography.titleLarge,
-                                color = buttonColors.primary
-                            )
-                            TextButton(onClick = { showHistory = false }) {
-                                Text("Закрыть")
+                            IconButton(
+                                onClick = { history.clear() },
+                                enabled = history.isNotEmpty()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Очистить историю",
+                                    modifier = Modifier.size(if (isLandscape) 32.dp else 40.dp)
+                                )
+                            }
+                            IconButton(onClick = { showHistory = false }) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Закрыть историю",
+                                    modifier = Modifier.size(if (isLandscape) 32.dp else 40.dp)
+                                )
                             }
                         }
                         Spacer(modifier = Modifier.height(16.dp))
                         if (history.isEmpty()) {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text("История пуста", color = buttonColors.onSurfaceVariant)
-                            }
+                            // Больше не показываем текст 'История пуста'
+                            Spacer(modifier = Modifier.height(16.dp))
                         } else {
                             Column(
                                 modifier = Modifier
@@ -402,7 +452,16 @@ fun Calculator() {
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(vertical = 8.dp),
+                                            .padding(vertical = 8.dp)
+                                            .combinedClickable(
+                                                onClick = {},
+                                                onLongClick = {
+                                                    clipboardManager.setText(AnnotatedString("$expr = $res"))
+                                                    coroutineScope.launch {
+                                                        snackbarHostState.showSnackbar("Скопировано!")
+                                                    }
+                                                }
+                                            ),
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Text(
@@ -447,9 +506,23 @@ fun CalculatorM3Button(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.93f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        )
+    )
     Button(
         onClick = onClick,
-        modifier = modifier.fillMaxHeight().padding(0.dp),
+        modifier = modifier
+            .fillMaxHeight()
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            },
         shape = shape,
         colors = ButtonDefaults.buttonColors(
             containerColor = color,
@@ -458,11 +531,12 @@ fun CalculatorM3Button(
         elevation = ButtonDefaults.buttonElevation(
             defaultElevation = 2.dp,
             pressedElevation = 0.dp
-        )
+        ),
+        interactionSource = interactionSource
     ) {
         Text(
             text = text,
-            fontSize = if (text in listOf("+", "-", "×", "÷", "=", "C", "±", "%")) opFontSize else fontSize,
+            fontSize = if (text in listOf("+", "-", "×", "÷", "=", "C", "±", "%", "(", ")")) opFontSize else fontSize,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
@@ -477,19 +551,36 @@ fun evaluate(expr: String): Double {
     val numbers = mutableListOf<Double>()
     val ops = mutableListOf<Char>()
     var i = 0
+    fun parseNumber(): Double {
+        val sb = StringBuilder()
+        if (i < tokens.length && tokens[i] == '-') {
+            sb.append('-')
+            i++
+        }
+        while (i < tokens.length && (tokens[i].isDigit() || tokens[i] == '.')) {
+            sb.append(tokens[i])
+            i++
+        }
+        return sb.toString().toDouble()
+    }
     while (i < tokens.length) {
         when {
-            tokens[i].isDigit() || tokens[i] == '.' || (tokens[i] == '-' && (i == 0 || !tokens[i-1].isDigit())) -> {
-                val sb = StringBuilder()
-                if (tokens[i] == '-') {
-                    sb.append('-')
-                    i++
+            tokens[i] == '(' -> {
+                ops.add('(')
+                i++
+            }
+            tokens[i] == ')' -> {
+                while (ops.isNotEmpty() && ops.last() != '(') {
+                    val b = numbers.removeAt(numbers.lastIndex)
+                    val a = numbers.removeAt(numbers.lastIndex)
+                    val op = ops.removeAt(ops.lastIndex)
+                    numbers.add(applyOp(a, b, op))
                 }
-                while (i < tokens.length && (tokens[i].isDigit() || tokens[i] == '.')) {
-                    sb.append(tokens[i])
-                    i++
-                }
-                numbers.add(sb.toString().toDouble())
+                if (ops.isNotEmpty() && ops.last() == '(') ops.removeAt(ops.lastIndex)
+                i++
+            }
+            tokens[i].isDigit() || tokens[i] == '-' && (i == 0 || tokens[i-1] in "+-*/(") -> {
+                numbers.add(parseNumber())
             }
             tokens[i] in "+-*/" -> {
                 while (ops.isNotEmpty() && precedence(ops.last()) >= precedence(tokens[i])) {
