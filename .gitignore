@@ -28,3 +28,6 @@ Thumbs.db
 
 # Android Studio Captures
 /captures
+
+# Игнорировать временные файлы с тильдой
+*~
