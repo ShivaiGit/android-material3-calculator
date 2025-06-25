@@ -1,0 +1,30 @@
+# Android/IntelliJ
+.gradle/
+.idea/
+build/
+app/build/
+.kotlin/
+*.iml
+*.log
+*.tmp
+.DS_Store
+local.properties
+
+# Mac
+*.DS_Store
+
+# Windows
+Thumbs.db
+
+# Kotlin
+*.class
+
+# VSCode
+.vscode/
+
+# Android NDK/CMake
+.externalNativeBuild/
+.cxx/
+
+# Android Studio Captures
+/captures
